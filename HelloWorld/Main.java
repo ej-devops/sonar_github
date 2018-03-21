@@ -1,10 +1,5 @@
-package HelloWorld;
-public class Main
-{
-    public static void main(String[] args)
-    {
-       System.out.println("Hello world!!!");
-       System unread = "TEST"; 
-   }
-}
+int target = -5;
+int num = 3;
 
+target = -nua;  
+target += num;

@@ -9,6 +9,7 @@ import java.util.Optional;
 @JsonIgnoreProperties(ignoreUnknown = true)
 
 public class ZendeskTicketVia {
+ 
   private static final String CHANNEL = "channel";
   private static final String SOURCE = "source";
   private static final String TO = "to";

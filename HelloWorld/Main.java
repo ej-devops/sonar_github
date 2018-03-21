@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 @JsonInclude(Include.ALWAYS)
 @JsonIgnoreProperties(ignoreUnknown = true)
+
 public class ZendeskTicketVia {
   private static final String CHANNEL = "channel";
   private static final String SOURCE = "source";

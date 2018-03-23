@@ -1,53 +1,133 @@
-package com.ej.alumni.wordpress;
-public abstract class WordpressConstants {
-  public static final String USERNAME = "username";
-  public static final String EMAIL = "email";
-  public static final String FIRST_NAME = "first_name";
-  public static final String LAST_NAME = "last_name";
-  public static final String NICKNAME = "nickname";
-  public static final String DISPLAY_NAME = "display_name";
-  public static final String ALUMNI_SECURITY_PARAMETER = "alumni_register";
-  public static final String ALUMNI_USER_ID = "alumni_user_id";
-  public static final String ALUMNI_SAP_USER_ID = "alumni_sap_user_id";
-  public static final String ALUMNI_TOKEN = "alumni_token";
-  public static final String ALUMNI_NETWORK = "alumni_network";
-  public static final String NOTIFY = "notify";
-  public static final String NONCE = "nonce";
-  public static final String COOKIE = "cookie";
-  public static final String CONTROLLER = "controller";
-  public static final String METHOD = "method";
-  public static final String GET = "get";
-  public static final String POST = "post";
-  public static final String PUT = "put";
-  public static final String STATUS = "status";
-  public static final String SLUG = "slug";
-  public static final String PAGE = "page";
-  public static final String COUNT = "count";
-  public static final String EXTRAQUERY = "extraquery";
-  public static final String CATEGORY_NAME = "category_name";
-  public static final String META_KEY = "meta_key";
-  public static final String META_COMPARE = "meta_compare";
-  public static final String POST_ID = "post_id";
-  public static final String PARAM_ORDER_BY = "orderby";
-  // API ENDPOINTS
-  public static final String GET_CATEGORY_INDEX = "get_category_index/";
-  public static final String USER_REGISTER = "user/register/";
-  public static final String GET_RECENT_POSTS = "get_recent_posts/";
-  public static final String GET_POSTS = "get_posts/";
-  public static final String SAVE_ALUMNI_STORY = "alumnistory/save_alumni_story/";
-  public static final String GET_ALUMNI_STORY = "alumnistory/get_alumni_story/";
-  public static final String CREATE_POST = "posts/create_post/";
-  public static final String POST_COMMENT = "user/post_comment/";
-  public static final String GENERATE_ALUMNI_TOKEN = "auth/generate_alumni_auth/";
-  public static final String GET_NONCE = "get_nonce/";
-  public static final String SAVE_CATEGORY = "save_category/";
-  public static final String SAVE_ALUMNI_NETWORK = "alumnistory/save_alumni_network/";
-  // Messages
-  public static final String ERR_MSG_FORBIDDEN = "Action is forbidden";
-  public static final String ARTICLE_NOT_EXIST =
-      "the article doesn't exist or you don't have permissions";
-  public static final String COMMENT_PERMISSIONS =
-      "you don't have permissions to write comments in that article";
-  public static final String SAVE_ALUMNI_STORY_PERMISSIONS =
-      "you don't have permissions to change in that story";
+apackage com.ej.alumni.security;
+import com.ej.alumni.common.S3Helper;
+import com.ej.alumni.common.S3HelperFactory;
+import com.sap.core.connectivity.api.configuration.ConnectivityConfiguration;
+import com.sap.core.connectivity.api.configuration.DestinationConfiguration;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.security.KeyStore;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.naming.NamingException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.springframework.mock.jndi.SimpleNamingContextBuilder;
+public class ImgSrcParserTest {
+  @Before
+  public void before() throws IllegalStateException, NamingException, IOException {
+    SimpleNamingContextBuilder builder = new SimpleNamingContextBuilder();
+    Map<String, Map<String, String>> destinations = buildDestinations();
+    ConnectivityConfiguration conf = new EJConnectivityConfiguration(destinations);
+    builder.bind("java:comp/env/connectivityConfiguration", conf);
+    builder.activate();
+  }
+  private static class EJConnectivityConfiguration implements ConnectivityConfiguration {
+    private Map<String, Map<String, String>> connectivities;
+    public EJConnectivityConfiguration(Map<String, Map<String, String>> connectivities) {
+      this.connectivities = connectivities;
+    }
+    @Override
+    public DestinationConfiguration getConfiguration(String name) {
+      return new EJDestinationConfiguration(connectivities.get(name));
+    }
+    @Override
+    public DestinationConfiguration getConfiguration(String account, String name) {
+      return getConfiguration(name);
+    }
+    @Override
+    public Map<String, DestinationConfiguration> getConfigurations(String account) {
+      return null;
+    }
+    @Override
+    public void clearCache() {}
+  }
+  private static class EJDestinationConfiguration implements DestinationConfiguration {
+    private Map<String, String> destination;
+    public EJDestinationConfiguration(Map<String, String> destination) {
+      this.destination = destination;
+    }
+    @Override
+    public String getProperty(String s) {
+      return destination.get(s);
+    }
+    @Override
+    public Map<String, String> getAllProperties() {
+      return destination;
+    }
+    @Override
+    public KeyStore getKeyStore() {
+      return null;
+    }
+    @Override
+    public KeyStore getTrustStore() {
+      return null;
+    }
+  }
+  private Map<String, Map<String, String>> buildDestinations() throws IOException {
+    File destinations = new File("WebContent-customers/sap/WEB-INF/Destinations");
+    Map<String, Map<String, String>> dests = new HashMap<>();
+    for (File destination : destinations.listFiles()) {
+      HashMap<String, String> dest = new HashMap<>();
+      BufferedReader br = new BufferedReader(new FileReader(destination));
+      String confLine;
+      while ((confLine = br.readLine()) != null) {
+        confLine = confLine.trim();
+        if (!confLine.startsWith("#") && !confLine.isEmpty()) {
+          String[] c = confLine.split("=");
+          dest.put(c[0], c.length > 1 ? c[1] : "");
+        }
+      }
+      dests.put(dest.get("Name"), dest);
+    }
+    return dests;
+  }
+  @Test
+  @Ignore("to test locally only")
+  public void testParseHtmlReplaceWithSafeImgSrc() {
+    S3Helper s3ImageHelper = new S3HelperFactory().imageSourcesS3Helper();
+    S3Helper customerImageHelper = new S3HelperFactory().customerImagesS3Helper();
+    EJSanitizer sanitizer = new EJSanitizer();
+    ImgSrcParserAttributePolicy ispap = new ImgSrcParserAttributePolicy();
+    ispap.setImageSourcesS3Helper(s3ImageHelper);
+    sanitizer.setImgSrcAuthInjectionProtected(ispap);
+    ArrayList<String> domains = new ArrayList<>();
+    domains.add("www.youtube.com");
+    domains.add("player.vimeo.com");
+    sanitizer.setVideoValidDomain(domains);
+    String content =
+        "<iframe width=\"640\" height=\"360\" src=\"https:////player.vimeo.com/video/156299091\" frameborder=\"0\" allowfullscreen>doc inside</iframe>"
+            + "<iframe width=\"640\" height=\"360\" src=\"https:////ppp.com/video/156299091\" frameborder=\"0\" allowfullscreen>doc inside</iframe><img src=\"http://static.boredpanda.com/blog/wp-content/uploads/2016/08/cute-kittens-30-57b30ad41bc90__605.jpg\"/>";
+    //ImgSrcParserAttributePolicy policy = new ImgSrcParserAttributePolicy();
+    //policy.setProxyImageHost("s3-eu-west-1.amazonaws.com");
+    //String result = policy.apply("", "", "http://www.pngall.com/wp-content/uploads/2016/04/Rose-PNG-Picture.png");
+    //System.out.println(result);
+    List<String> logs = new ArrayList<>();
+    //String r = sanitizer.noSanitizationSanitizer().sanitize(content);
+    System.out.println("---");
+    //        System.out.println(r);
+    Document doc = Jsoup.parseBodyFragment(content);
+    doc.outputSettings().prettyPrint(false);
+    ImgSrcSignerAttributePolicy imgSrcSignerAttributePolicy = new ImgSrcSignerAttributePolicy();
+    ImgSrcParserAttributePolicy imgSrcParserAttributePolicy = new ImgSrcParserAttributePolicy();
+    imgSrcParserAttributePolicy.setImageSourcesS3Helper(s3ImageHelper);
+    imgSrcParserAttributePolicy.setCustomerImagesS3Helper(customerImageHelper);
+    for (Element element : doc.select("img")) {
+      String orig = element.attr("src");
+      String out = imgSrcParserAttributePolicy.apply("img", "src", orig);
+      if (out != null) {
+        element.attr("src", out);
+      }
+    }
+    System.out.println(doc.body().html());
+    //Assert.assertEquals("<div><img src='/mylocalimage.jpg'/>some context<img src='https://s3-eu-west-1.amazonaws.com/ej-test-imagefiles/cf8d354e45a983162d3f3e74e88bac27da4ae9e45ea435a05fae82508e89564c.png'/>here and there</div>", result);
+  }
 }
+

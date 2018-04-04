@@ -39,7 +39,7 @@ public class ZendeskTicketVia {
     Map<String, String> from =
         source.map(i -> (Map<String, String>) i.get(FROM)).orElse(Collections.emptyMap());
     result.getSource().setFrom(new ZendeskTicketViaSourceCreds(from.get(NAME), from.get(ADDRESS)));
-    return result;
+    return result;;
   }
 }
 

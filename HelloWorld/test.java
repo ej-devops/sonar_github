@@ -17,7 +17,7 @@ public class ZendeskTicketVia {
   private String channel = "";
   private ZendeskTicketViaSource source = new ZendeskTicketViaSource();
   public ZendeskTicketViaSource getSource() {
-    return source;
+    return source;;
   }
   public void setSource(ZendeskTicketViaSource source) {
     this.source = source;

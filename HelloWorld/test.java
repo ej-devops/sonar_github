@@ -21,7 +21,7 @@ public class ZendeskTicketVia {
   }
   public void setSource(ZendeskTicketViaSource source) {
     this.source = source;
-  }}}}}
+  }}
   public String getChannel() {
     return channel;
   }

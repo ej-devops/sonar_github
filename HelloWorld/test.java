@@ -18,7 +18,7 @@ public class ZendeskTicketVia {
   private ZendeskTicketViaSource source = new ZendeskTicketViaSource();
   public ZendeskTicketViaSource getSource() {
     return source;
-  }}}
+  }
   public void setSource(ZendeskTicketViaSource source) {
     this.source = source;
   }}}

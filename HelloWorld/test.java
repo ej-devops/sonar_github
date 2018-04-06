@@ -15,7 +15,6 @@ public class ZendeskTicketVia {
   private static final String ADDRESS = "address";
   private static final String NAME = "name";
   private String channel = "";
-  private ZendeskTicketViaSource source = new ZendeskTicketViaSource();
   public ZendeskTicketViaSource getSource() {
     return source;
   }}

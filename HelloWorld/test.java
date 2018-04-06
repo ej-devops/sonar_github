@@ -14,4 +14,4 @@ public class Fruit extends Food {
     if (obj instanceof Fruit ) {  // Noncompliant; broken for child classes
       return ripe.equals(((Fruit)obj).getRipe());
     }
-    else if (obj instanceof Season) { // Noncompliant; symmetry broken for Season class
+    else if (obj instanceof Season) { // Noncompliant; symmetry broken for Season class'

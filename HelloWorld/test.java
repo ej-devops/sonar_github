@@ -1,6 +1,7 @@
 public class Fruit extends Food {
   private Season ripe;
-
+  private Season bar;
+  
   public boolean equals(Object obj) {
     if (obj == this) {
       return true;
